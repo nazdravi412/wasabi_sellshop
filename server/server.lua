@@ -7,13 +7,13 @@ NDCore = exports["ND_Core"]:GetCoreObject()
 
 lib.callback.register('ws_sellshop:sellItem', function(source, data)
 	local src = source
-	print(src)
+	--print(src)
     local xPlayer = NDCore.Functions.GetPlayer(source)
-	print(data.item)
+	--print(data.item)
     local xItem = exports.ox_inventory:GetItem(src, data.item, nil, false)
-	print(dump(xItem))
+	--print(dump(xItem))
     if xItem.count < data.quantity then
-		print("xItem is less than data.quantity.")
+		--print("xItem is less than data.quantity.")
         return false
     else
         local profit = math.floor(data.price * data.quantity)
