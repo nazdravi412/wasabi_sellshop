@@ -2,22 +2,13 @@
 --------------- https://discord.gg/wasabiscripts  -------------
 ---------------------------------------------------------------
 
-ESX = exports["es_extended"]:getSharedObject()
+NDCore = exports["ND_Core"]:GetCoreObject()
+
+blipStatus = false
 
 addCommas = function(n)
 	return tostring(math.floor(n)):reverse():gsub("(%d%d%d)","%1,")
 								  :gsub(",(%-?)$","%1"):reverse()
-end
-
-CreateBlip = function(coords, sprite, colour, text, scale)
-    local blip = AddBlipForCoord(coords)
-    SetBlipSprite(blip, sprite)
-    SetBlipColour(blip, colour)
-    SetBlipAsShortRange(blip, true)
-    SetBlipScale(blip, scale)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString(text)
-    EndTextCommandSetBlipName(blip)
 end
 
 AddEventHandler('ws_sellshop:sellItem', function(data)
@@ -56,6 +47,7 @@ AddEventHandler('ws_sellshop:sellItem', function(data)
     end
 end)
 
+RegisterNetEvent("ws_sellshop:interact")
 AddEventHandler('ws_sellshop:interact', function(data)
     local storeData = data.store
     local items = storeData.items
@@ -76,31 +68,66 @@ AddEventHandler('ws_sellshop:interact', function(data)
     lib.showContext('storeInteract')
 end)
 
--- Blips/Targets
-CreateThread(function()
-    for i=1, #Config.SellShops do
-        exports.qtarget:AddBoxZone(i.."_sell_shop", Config.SellShops[i].coords, 1.0, 1.0, {
-            name=i.."_sell_shop",
-            heading=Config.SellShops[i].blip.heading,
-            debugPoly=false,
-            minZ=Config.SellShops[i].coords.z-1.5,
-            maxZ=Config.SellShops[i].coords.z+1.5
-        }, {
-            options = {
-                {
-                    event = 'ws_sellshop:interact',
-                    icon = 'fas fa-hand-paper',
-                    label = 'Interact',
-                    store = Config.SellShops[i]
-                }
-            },
-            job = 'all',
-            distance = 1.5
-        })
-        if Config.SellShops[i].blip.enabled then
-            CreateBlip(Config.SellShops[i].coords, Config.SellShops[i].blip.sprite, Config.SellShops[i].blip.color, Config.SellShops[i].label, Config.SellShops[i].blip.scale)
-        end
-    end
+-- Job Check
+-- Set blip only for civs. 
+Citizen.CreateThread(function()
+	while true do
+		local on_duty = NDCore.Functions.GetSelectedCharacter()	
+		if(on_duty) then
+			PlayerJob = on_duty.job
+		end
+		Citizen.Wait(3000)
+		TriggerEvent("sellshop:blipToggle")
+	end
+end)
+
+CreateBlip = function(coords, sprite, colour, text, scale)
+    blip = AddBlipForCoord(coords)
+    SetBlipSprite(blip, sprite)
+    SetBlipColour(blip, colour)
+    SetBlipAsShortRange(blip, true)
+    SetBlipScale(blip, scale)
+    BeginTextCommandSetBlipName("STRING")
+    AddTextComponentString(text)
+    EndTextCommandSetBlipName(blip)
+end
+
+RegisterNetEvent('sellshop:blipToggle')
+AddEventHandler('sellshop:blipToggle', function()
+	for i=1, #Config.SellShops do
+		if PlayerJob == "SACO" and blipStatus == false then
+			print("Blip should be on.")
+			exports.qtarget:AddBoxZone(i.."_sell_shop", Config.SellShops[i].coords, 1.0, 1.0, {
+				name=i.."_sell_shop",
+				heading=Config.SellShops[i].blip.heading,
+				debugPoly=false,
+				minZ=Config.SellShops[i].coords.z-1.5,
+				maxZ=Config.SellShops[i].coords.z+1.5
+			}, {
+				options = {
+					{
+						event = 'ws_sellshop:interact',
+						icon = 'fas fa-hand-paper',
+						label = 'Interact',
+						store = Config.SellShops[i]
+					}
+				},
+				job = 'all',
+				distance = 1.5
+			})
+			if Config.SellShops[i].blip.enabled then
+				CreateBlip(Config.SellShops[i].coords, Config.SellShops[i].blip.sprite, Config.SellShops[i].blip.color, Config.SellShops[i].label, Config.SellShops[i].blip.scale)
+			end
+			blipStatus = true
+		elseif PlayerJob ~= "SACO" then
+			for i=1, #Config.SellShops do
+				print("Blip should be off.", Config.SellShops[i].label)
+				RemoveBlip(blip)
+				blipStatus = false
+				Citizen.Wait(3000)
+			end
+		end	
+	end
 end)
 
 -- Ped spawn thread
