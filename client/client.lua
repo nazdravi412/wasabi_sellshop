@@ -96,7 +96,7 @@ RegisterNetEvent('sellshop:blipToggle')
 AddEventHandler('sellshop:blipToggle', function()
 	for i=1, #Config.SellShops do
 		if PlayerJob == "SACO" and blipStatus == false then
-			print("Blip should be on.")
+			--print("Blip should be on.")
 			exports.qtarget:AddBoxZone(i.."_sell_shop", Config.SellShops[i].coords, 1.0, 1.0, {
 				name=i.."_sell_shop",
 				heading=Config.SellShops[i].blip.heading,
@@ -121,7 +121,7 @@ AddEventHandler('sellshop:blipToggle', function()
 			blipStatus = true
 		elseif PlayerJob ~= "SACO" then
 			for i=1, #Config.SellShops do
-				print("Blip should be off.", Config.SellShops[i].label)
+				--print("Blip should be off.", Config.SellShops[i].label)
 				RemoveBlip(blip)
 				blipStatus = false
 				Citizen.Wait(3000)
